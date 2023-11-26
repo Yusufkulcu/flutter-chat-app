@@ -30,13 +30,13 @@ class _ChatDetailMessageListCardState extends State<ChatDetailMessageListCard> {
       child: ConstrainedBox(
         constraints: BoxConstraints(maxWidth: width - 45),
         child: Card(
-          margin: EdgeInsets.symmetric(
+          margin: const EdgeInsets.symmetric(
             horizontal: 15,
             vertical: 5,
           ),
           color: messageData.messageDetail_sendUser == widget.userID
-              ? Color(0xff20a090)
-              : Color(0xfff2f7fb),
+              ? const Color(0xff20a090)
+              : const Color(0xfff2f7fb),
           child: Stack(
             children: [
               Padding(
@@ -68,24 +68,37 @@ class _ChatDetailMessageListCardState extends State<ChatDetailMessageListCard> {
                   child: Row(
                     children: [
                       SizedBox(
-                        width: messageData.messageDetail_sendUser != widget.userID ? 10 : 0,
+                        width:
+                            messageData.messageDetail_sendUser != widget.userID
+                                ? 10
+                                : 0,
                       ),
                       Text(
-                        GeneralHelper.getMessageSpecificDate(messageData, "hour"),
+                        GeneralHelper.getMessageSpecificDate(
+                            messageData, "hour"),
                         style: TextStyle(
-                          color:
-                              messageData.messageDetail_sendUser == widget.userID
-                                  ? Colors.white
-                                  : Colors.black,
+                          color: messageData.messageDetail_sendUser ==
+                                  widget.userID
+                              ? Colors.white
+                              : Colors.black,
                         ),
                       ),
-                      const SizedBox(width: 5,),
+                      const SizedBox(
+                        width: 5,
+                      ),
                       if (messageData.messageDetail_sendUser == widget.userID)
                         Padding(
                           padding: const EdgeInsets.only(right: 5),
                           child: Icon(
-                            Icons.done_all,
-                            color: messageData.messageDetail_messageReadStatus == "notRead" ? Colors.black : Colors.blue,
+                            messageData.messageDetail_messageReadStatus ==
+                                    "notRead"
+                                ? Icons.done
+                                : Icons.done_all,
+                            color:
+                                messageData.messageDetail_messageReadStatus ==
+                                        "notRead"
+                                    ? Colors.black
+                                    : Colors.blue,
                           ),
                         )
                     ],

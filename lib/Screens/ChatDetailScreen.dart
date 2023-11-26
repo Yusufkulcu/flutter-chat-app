@@ -1,13 +1,14 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
-
 import 'package:chatappyenitasarim/Helpers/GeneralHelper.dart';
 import 'package:chatappyenitasarim/Models/MessageDetailModel.dart';
 import 'package:chatappyenitasarim/Models/MessageModel.dart';
 import 'package:chatappyenitasarim/Widgets/ChatDetailMessageListCard.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:record/record.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class ChatDetailScreen extends StatefulWidget {
   const ChatDetailScreen({
@@ -27,6 +28,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   final TextEditingController messageController = TextEditingController();
   bool isWriting = false;
   ScrollController scrollController = ScrollController();
+  late Timer _timer;
+  late AudioRecorder audioRecord;
+  late AudioPlayer audioPlayer;
+  bool isAudioRecording = false;
 
   void setMessageList(MessageDetailModel messageDetailModel) {
     final List<MessageDetailModel>? messageList =
@@ -39,8 +44,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
+
+    audioPlayer = AudioPlayer();
+    audioRecord = AudioRecorder();
+
     socket!.on("onMessage", (data) {
-      final MessageDetailModel messageDetailModel = MessageDetailModel.fromJson(data["messageDetailModel"]);
+      final MessageDetailModel messageDetailModel =
+          MessageDetailModel.fromJson(data["messageDetailModel"]);
       setMessageList(messageDetailModel);
       scrollController.animateTo(
         scrollController.position.maxScrollExtent + 100,
@@ -48,13 +58,47 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         curve: Curves.easeOut,
       );
     });
-    Timer(const Duration(milliseconds: 100), () async {
+    _timer = Timer(const Duration(milliseconds: 100), () async {
       scrollController.animateTo(
         scrollController.position.maxScrollExtent + 100,
         duration: const Duration(milliseconds: 1),
         curve: Curves.easeOut,
       );
     });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    audioPlayer.dispose();
+    audioRecord.dispose();
+    super.dispose();
+  }
+
+  Future<void> startAudioRecord() async {
+    try {
+      if (await audioRecord.hasPermission()) {
+        setState(() {
+          isAudioRecording = true;
+        });
+        await audioRecord.start(const RecordConfig(),
+            path: 'aFullPath/myFile.m4a');
+      }
+    } catch (e) {
+      print("Kayıt başlamadı $e");
+    }
+  }
+
+  Future<void> stopAudioRecord() async {
+    try {
+      setState(() {
+        isAudioRecording = false;
+      });
+      final String? recordPath = await audioRecord.stop();
+      print(recordPath);
+    } catch (e) {
+      print("Kayıt durdurulamadı $e");
+    }
   }
 
   @override
@@ -195,7 +239,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                           ),
                         ),
                         IconButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            if(isAudioRecording == true) {
+                              stopAudioRecord();
+                            }else {
+                              startAudioRecord();
+                            }
+                          },
                           icon: const Icon(
                             Icons.mic_outlined,
                             size: 28,
