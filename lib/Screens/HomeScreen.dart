@@ -44,7 +44,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void changePage(int index) {
-    // print(index);
+    print(index);
     if(index == 0) {
       setState(() {
         activePageIndex = 0;
