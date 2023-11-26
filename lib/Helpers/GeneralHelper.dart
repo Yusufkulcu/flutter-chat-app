@@ -103,6 +103,21 @@ class GeneralHelper {
     }
   }
 
+  static String getMessageSpecificDate(MessageDetailModel messageDetailModel, String type) {
+    DateTime date = DateTime.fromMillisecondsSinceEpoch(
+        int.parse(messageDetailModel.messageDetail_messageDate),
+        isUtc: false);
+    if(type=="hour") {
+      return DateFormat.Hm("tr").format(date);
+    }else if(type=="fulldate") {
+      return DateFormat.yMMMd("tr").format(date);
+    }else if(type=="day") {
+      return DateFormat.EEEE("tr").format(date);
+    }else {
+      return DateFormat.yMMMd("tr").format(date);
+    }
+  }
+
   static Map<String, dynamic> dateTimeDiff(int inputDateMiliseconds) {
     DateTime date =
         DateTime.fromMillisecondsSinceEpoch(inputDateMiliseconds, isUtc: false);

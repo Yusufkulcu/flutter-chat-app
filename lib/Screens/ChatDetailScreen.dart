@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
@@ -32,6 +33,27 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         widget.messageModel.allMessage;
     setState(() {
       messageList!.add(messageDetailModel);
+    });
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    socket!.on("onMessage", (data) {
+      final MessageDetailModel messageDetailModel = MessageDetailModel.fromJson(data["messageDetailModel"]);
+      setMessageList(messageDetailModel);
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent + 100,
+        duration: const Duration(milliseconds: 1),
+        curve: Curves.easeOut,
+      );
+    });
+    Timer(const Duration(milliseconds: 100), () async {
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent + 100,
+        duration: const Duration(milliseconds: 1),
+        curve: Curves.easeOut,
+      );
     });
   }
 
@@ -200,7 +222,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                             setMessageList(response);
                             scrollController.animateTo(
                               scrollController.position.maxScrollExtent + 100,
-                              duration: Duration(milliseconds: 300),
+                              duration: Duration(milliseconds: 1),
                               curve: Curves.easeOut,
                             );
                           }

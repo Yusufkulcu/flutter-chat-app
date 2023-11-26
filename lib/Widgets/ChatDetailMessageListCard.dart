@@ -1,3 +1,4 @@
+import 'package:chatappyenitasarim/Helpers/GeneralHelper.dart';
 import 'package:chatappyenitasarim/Models/MessageDetailModel.dart';
 import 'package:flutter/material.dart';
 
@@ -70,7 +71,7 @@ class _ChatDetailMessageListCardState extends State<ChatDetailMessageListCard> {
                         width: messageData.messageDetail_sendUser != widget.userID ? 10 : 0,
                       ),
                       Text(
-                        "22:22",
+                        GeneralHelper.getMessageSpecificDate(messageData, "hour"),
                         style: TextStyle(
                           color:
                               messageData.messageDetail_sendUser == widget.userID
