@@ -4,7 +4,6 @@ import 'package:chatappyenitasarim/Screens/CallListScreen.dart';
 import 'package:chatappyenitasarim/Screens/ChatListScreen.dart';
 import 'package:chatappyenitasarim/Screens/SettingsScreen.dart';
 import 'package:chatappyenitasarim/Screens/UsersListScreen.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -44,6 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void changePage(int index) {
+    print(index);
     print(index);
     if(index == 0) {
       setState(() {
