@@ -18,7 +18,7 @@ void main() async {
       if(pref.getBool("isProfileUpdateRequired")==true) {
         runApp(const MyApp(screen: LoginProfileUpdateScreen(),));
       }else {
-        GeneralHelper.connectSocket(pref.getString("userID"));
+        GeneralHelper.connectSocket();
         runApp(const MyApp(screen: HomeScreen(),));
       }
     }

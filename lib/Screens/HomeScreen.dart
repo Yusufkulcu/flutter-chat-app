@@ -1,5 +1,4 @@
-import 'package:chatappyenitasarim/Helpers/HttpHelper.dart';
-import 'package:chatappyenitasarim/Models/MessageModel.dart';
+import 'package:chatappyenitasarim/Helpers/GeneralHelper.dart';
 import 'package:chatappyenitasarim/Screens/CallListScreen.dart';
 import 'package:chatappyenitasarim/Screens/ChatListScreen.dart';
 import 'package:chatappyenitasarim/Screens/SettingsScreen.dart';
@@ -15,7 +14,6 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  late Future<List<MessageModel>> allMessageFuture;
   String userID = "";
   int activePageIndex = 1;
 
@@ -25,8 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
+    if(socket == null) {
+      GeneralHelper.connectSocket();
+    }
     getUserID();
-    allMessageFuture = HttpHelper.getMessageList();
   }
 
   @override

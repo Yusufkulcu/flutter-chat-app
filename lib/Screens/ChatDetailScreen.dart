@@ -12,7 +12,6 @@ import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
-import 'package:path/path.dart' as path;
 
 class ChatDetailScreen extends StatefulWidget {
   const ChatDetailScreen({
@@ -36,6 +35,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   late AudioRecorder audioRecord;
   late AudioPlayer audioPlayer;
   bool isAudioRecording = false;
+  bool isLastAudioPlaying = false;
+  late Widget textOrAudio;
+  late String? lastAudioRecordPAth;
 
   void setMessageList(MessageDetailModel messageDetailModel) {
     final List<MessageDetailModel>? messageList =
@@ -48,7 +50,29 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
-    GeneralHelper.connectSocket(widget.userID);
+    textOrAudio = TextFormField(
+      controller: messageController,
+      onChanged: (value) {
+        print(isWriting);
+        if (value.isNotEmpty) {
+          setState(() {
+            isWriting = true;
+          });
+        } else {
+          setState(() {
+            isWriting = false;
+          });
+        }
+      },
+      decoration: const InputDecoration(
+        hintText: "Mesajınızı yazınız.",
+        contentPadding: EdgeInsets.all(5),
+        border: InputBorder.none,
+      ),
+    );
+    if (socket == null) {
+      GeneralHelper.connectSocket();
+    }
     audioPlayer = AudioPlayer();
     audioRecord = AudioRecorder();
 
@@ -81,14 +105,13 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> startAudioRecord() async {
     try {
-
       Map<Permission, PermissionStatus> permissions = await [
         Permission.storage,
         Permission.microphone,
       ].request();
 
-      bool permissionsGranted = permissions[Permission.storage]!.isGranted &&
-          permissions[Permission.microphone]!.isGranted;
+      // bool permissionsGranted = permissions[Permission.storage]!.isGranted &&
+      //     permissions[Permission.microphone]!.isGranted;
 
       if (await audioRecord.hasPermission()) {
         setState(() {
@@ -103,14 +126,14 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           final created = await appFolder.create(recursive: true);
           createdPath = created.path;
           print(created.path);
-        }else {
+        } else {
           createdPath = appFolder.path;
         }
-        final filepath = '$createdPath/${DateTime.now().millisecondsSinceEpoch}.rn';
+        final filepath =
+            '$createdPath/${DateTime.now().millisecondsSinceEpoch}.rn';
         print(filepath);
 
-        await audioRecord.start(const RecordConfig(),
-            path: filepath);
+        await audioRecord.start(const RecordConfig(), path: filepath);
       }
     } catch (e) {
       print("Kayıt başlamadı $e");
@@ -119,15 +142,28 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> stopAudioRecord() async {
     try {
-      setState(() {
-        isAudioRecording = false;
-      });
       final String? recordPath = await audioRecord.stop();
       print(recordPath);
-      await audioPlayer.play(UrlSource(recordPath!));
+      setState(() {
+        isAudioRecording = false;
+        textOrAudio = Text("cdscsd");
+        lastAudioRecordPAth = "https://ecuworks.com.tr/public/iphone.mp3";
+      });
+      // await audioPlayer.play(UrlSource(recordPath!));
     } catch (e) {
       print("Kayıt durdurulamadı $e");
     }
+  }
+
+  Future<void> playLastAudioRecord() async {
+    if(lastAudioRecordPAth == null) return;
+    setState(() {
+      isLastAudioPlaying = true;
+    });
+    await audioPlayer.play(UrlSource(lastAudioRecordPAth!), volume: 100);
+    setState(() {
+      isLastAudioPlaying = false;
+    });
   }
 
   @override
@@ -141,7 +177,6 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         Base64Decoder().convert(oppositeData.profilePhotoBase64);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
-    final keyboard = MediaQuery.of(context).viewInsets.bottom;
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -235,25 +270,18 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      child: TextFormField(
-                        controller: messageController,
-                        onChanged: (value) {
-                          print(isWriting);
-                          if (value.isNotEmpty) {
-                            setState(() {
-                              isWriting = true;
-                            });
-                          } else {
-                            setState(() {
-                              isWriting = false;
-                            });
-                          }
-                        },
-                        decoration: const InputDecoration(
-                          hintText: "Mesajınızı yazınız.",
-                          contentPadding: EdgeInsets.all(5),
-                          border: InputBorder.none,
-                        ),
+                      child: Row(
+                        children: [
+                          InkWell(
+                            onTap: () {
+                              playLastAudioRecord();
+                            },
+                            child: Icon(
+                              isLastAudioPlaying == false ? Icons.play_arrow : Icons.stop_circle_outlined,
+                              size: 35,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
@@ -269,14 +297,16 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                         ),
                         IconButton(
                           onPressed: () {
-                            if(isAudioRecording == true) {
+                            if (isAudioRecording == true) {
                               stopAudioRecord();
-                            }else {
+                            } else {
                               startAudioRecord();
                             }
                           },
-                          icon: const Icon(
-                            Icons.mic_outlined,
+                          icon: Icon(
+                            isAudioRecording == true
+                                ? Icons.stop_circle_outlined
+                                : Icons.mic_outlined,
                             size: 28,
                           ),
                         ),

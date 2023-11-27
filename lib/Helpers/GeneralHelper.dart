@@ -4,6 +4,7 @@ import 'package:chatappyenitasarim/Models/UserModel.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:randomstring_dart/randomstring_dart.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:socket_io_client/socket_io_client.dart' as IO;
 
 const apiEndpoint = "https://chatappapi.yusufkulcu.com.tr/api";
@@ -12,14 +13,15 @@ const socketUrl = "http://185.136.206.33:5000";
 IO.Socket? socket;
 
 class GeneralHelper {
-  static void connectSocket(userID) {
+  static void connectSocket() async {
+    final pref = await SharedPreferences.getInstance();
     socket = IO.io(socketUrl, <String, dynamic>{
       'transports': ['websocket'],
       'reconnection': true,
       'autoConnect': true
     });
     socket!.connect();
-    socket!.onConnect((data) => socket!.emit("loginSocket", userID));
+    socket!.onConnect((data) => socket!.emit("loginSocket", pref.getString("userID")));
   }
 
   static MessageDetailModel sendMessage({
