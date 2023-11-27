@@ -6,14 +6,16 @@ import 'package:chatappyenitasarim/Helpers/GeneralHelper.dart';
 import 'package:chatappyenitasarim/Models/MessageDetailModel.dart';
 import 'package:chatappyenitasarim/Models/MessageModel.dart';
 import 'package:chatappyenitasarim/Widgets/ChatDetailMessageListCard.dart';
+import 'package:chatappyenitasarim/Providers/ChatDetailProvider.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:get/get.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
 
-class ChatDetailScreen extends StatefulWidget {
+class ChatDetailScreen extends ConsumerStatefulWidget {
   const ChatDetailScreen({
     super.key,
     required this.messageModel,
@@ -24,10 +26,10 @@ class ChatDetailScreen extends StatefulWidget {
   final String userID;
 
   @override
-  State<ChatDetailScreen> createState() => _ChatDetailScreenState();
+  ConsumerState<ChatDetailScreen> createState() => _ChatDetailScreenState();
 }
 
-class _ChatDetailScreenState extends State<ChatDetailScreen> {
+class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final TextEditingController messageController = TextEditingController();
   bool isWriting = false;
   ScrollController scrollController = ScrollController();
@@ -50,26 +52,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
-    textOrAudio = TextFormField(
-      controller: messageController,
-      onChanged: (value) {
-        print(isWriting);
-        if (value.isNotEmpty) {
-          setState(() {
-            isWriting = true;
-          });
-        } else {
-          setState(() {
-            isWriting = false;
-          });
-        }
-      },
-      decoration: const InputDecoration(
-        hintText: "Mesajınızı yazınız.",
-        contentPadding: EdgeInsets.all(5),
-        border: InputBorder.none,
-      ),
-    );
+    textOrAudio = ref.watch(chatDetailProviderStatement).setWidgetForTextField(messageController: messageController);
     if (socket == null) {
       GeneralHelper.connectSocket();
     }
@@ -116,6 +99,10 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       if (await audioRecord.hasPermission()) {
         setState(() {
           isAudioRecording = true;
+          textOrAudio = const Padding(
+            padding: EdgeInsets.all(8),
+            child: Text("Sesiniz kayıt ediliyor."),
+          );
         });
 
         Directory appDocDirectory = await getApplicationDocumentsDirectory();
@@ -146,8 +133,17 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       print(recordPath);
       setState(() {
         isAudioRecording = false;
-        textOrAudio = Text("cdscsd");
-        lastAudioRecordPAth = "https://ecuworks.com.tr/public/iphone.mp3";
+        textOrAudio = Row(
+          children: [
+            InkWell(
+              onTap: () {
+               playLastAudioRecord();
+              },
+              child: Icon(isLastAudioPlaying == true ? Icons.stop_circle_outlined : Icons.play_arrow, size: 30,),
+            )
+          ],
+        );
+        lastAudioRecordPAth = recordPath!;
       });
       // await audioPlayer.play(UrlSource(recordPath!));
     } catch (e) {
@@ -156,13 +152,35 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> playLastAudioRecord() async {
-    if(lastAudioRecordPAth == null) return;
+    if (lastAudioRecordPAth == null) return;
     setState(() {
       isLastAudioPlaying = true;
     });
     await audioPlayer.play(UrlSource(lastAudioRecordPAth!), volume: 100);
-    setState(() {
-      isLastAudioPlaying = false;
+    audioPlayer.onPlayerComplete.listen((event) {
+      setState(() {
+        isLastAudioPlaying = false;
+        textOrAudio = TextFormField(
+          controller: messageController,
+          onChanged: (value) {
+            print(isWriting);
+            if (value.isNotEmpty) {
+              setState(() {
+                isWriting = true;
+              });
+            } else {
+              setState(() {
+                isWriting = false;
+              });
+            }
+          },
+          decoration: const InputDecoration(
+            hintText: "Mesajınızı yazınız.",
+            contentPadding: EdgeInsets.all(5),
+            border: InputBorder.none,
+          ),
+        );
+      });
     });
   }
 
@@ -173,6 +191,9 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       receiverData: widget.messageModel.receiverData,
       userId: widget.userID,
     );
+
+    final getChatDetailProvider = ref.watch(chatDetailProviderStatement);
+
     Uint8List base64ProfileImage =
         Base64Decoder().convert(oppositeData.profilePhotoBase64);
     final width = MediaQuery.of(context).size.width;
@@ -270,19 +291,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      child: Row(
-                        children: [
-                          InkWell(
-                            onTap: () {
-                              playLastAudioRecord();
-                            },
-                            child: Icon(
-                              isLastAudioPlaying == false ? Icons.play_arrow : Icons.stop_circle_outlined,
-                              size: 35,
-                            ),
-                          ),
-                        ],
-                      ),
+                      child: textOrAudio,
                     ),
                   ),
                   if (isWriting == false)
