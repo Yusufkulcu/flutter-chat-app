@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 class ChatDetailProvider extends ChangeNotifier {
-  late Widget textFieldOrAudioPlayer;
+  Widget textFieldOrAudioPlayer = Container();
   bool isMessageWriting = false;
-  bool isWriting = false;
+  bool isAudioRecording = false;
 
   setWidgetForTextField({
     required TextEditingController messageController,
@@ -13,9 +13,9 @@ class ChatDetailProvider extends ChangeNotifier {
       controller: messageController,
       onChanged: (value) {
         if (value.isNotEmpty) {
-          isWriting = true;
+          isMessageWriting = true;
         } else {
-          isWriting = false;
+          isMessageWriting = false;
         }
       },
       decoration: const InputDecoration(

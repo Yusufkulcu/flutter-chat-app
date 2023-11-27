@@ -51,8 +51,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
 
   @override
   void initState() {
-    super.initState();
-    textOrAudio = ref.watch(chatDetailProviderStatement).setWidgetForTextField(messageController: messageController);
+    Future.delayed(Duration.zero, () {
+      ref
+          .watch(chatDetailProviderStatement)
+          .setWidgetForTextField(messageController: messageController);
+    });
     if (socket == null) {
       GeneralHelper.connectSocket();
     }
@@ -76,6 +79,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         curve: Curves.easeOut,
       );
     });
+    super.initState();
   }
 
   @override
@@ -137,9 +141,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           children: [
             InkWell(
               onTap: () {
-               playLastAudioRecord();
+                playLastAudioRecord();
               },
-              child: Icon(isLastAudioPlaying == true ? Icons.stop_circle_outlined : Icons.play_arrow, size: 30,),
+              child: Icon(
+                isLastAudioPlaying == true
+                    ? Icons.stop_circle_outlined
+                    : Icons.play_arrow,
+                size: 30,
+              ),
             )
           ],
         );
@@ -163,7 +172,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         textOrAudio = TextFormField(
           controller: messageController,
           onChanged: (value) {
-            print(isWriting);
             if (value.isNotEmpty) {
               setState(() {
                 isWriting = true;
@@ -243,12 +251,19 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         ),
         actions: [
           IconButton(
-              onPressed: () {},
-              icon: Icon(
-                Icons.call,
-                size: 28,
-              )),
-          IconButton(onPressed: () {}, icon: Icon(Icons.video_call, size: 35)),
+            onPressed: () {},
+            icon: Icon(
+              Icons.call,
+              size: 28,
+            ),
+          ),
+          IconButton(
+            onPressed: () {},
+            icon: Icon(
+              Icons.video_call,
+              size: 35,
+            ),
+          ),
         ],
       ),
       body: Container(
@@ -264,7 +279,6 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     height: 80,
                   );
                 }
-                print(widget.messageModel.allMessage!.length);
                 final singleMessageData =
                     widget.messageModel.allMessage![index];
                 return ChatDetailMessageListCard(
@@ -286,15 +300,17 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     ),
                   ),
                   Container(
-                    width: isWriting == false ? width - 150 : width - 100,
+                    width: getChatDetailProvider.isMessageWriting == false
+                        ? width - 150
+                        : width - 100,
                     child: Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      child: textOrAudio,
+                      child: getChatDetailProvider.textFieldOrAudioPlayer,
                     ),
                   ),
-                  if (isWriting == false)
+                  if (getChatDetailProvider.isMessageWriting == false)
                     Row(
                       children: [
                         IconButton(
@@ -306,14 +322,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                         ),
                         IconButton(
                           onPressed: () {
-                            if (isAudioRecording == true) {
+                            if (getChatDetailProvider.isAudioRecording ==
+                                true) {
                               stopAudioRecord();
                             } else {
                               startAudioRecord();
                             }
                           },
                           icon: Icon(
-                            isAudioRecording == true
+                            getChatDetailProvider.isAudioRecording == true
                                 ? Icons.stop_circle_outlined
                                 : Icons.mic_outlined,
                             size: 28,
