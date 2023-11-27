@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:chatappyenitasarim/Helpers/GeneralHelper.dart';
 import 'package:chatappyenitasarim/Models/MessageDetailModel.dart';
 import 'package:chatappyenitasarim/Models/MessageModel.dart';
+import 'package:chatappyenitasarim/Models/UserModel.dart';
 import 'package:chatappyenitasarim/Widgets/ChatDetailMessageListCard.dart';
 import 'package:chatappyenitasarim/Providers/ChatDetailProvider.dart';
 import 'package:flutter/material.dart';
@@ -33,13 +34,15 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   final TextEditingController messageController = TextEditingController();
   bool isWriting = false;
   ScrollController scrollController = ScrollController();
-  late Timer _timer;
   late AudioRecorder audioRecord;
   late AudioPlayer audioPlayer;
   bool isAudioRecording = false;
   bool isLastAudioPlaying = false;
   late Widget textOrAudio;
   late String? lastAudioRecordPAth;
+  late UserModel? oppositeData;
+  bool isLoadStatus = false;
+  late Uint8List base64ProfileImage = Base64Decoder().convert(defaultProfilePhoto);
 
   void setMessageList(MessageDetailModel messageDetailModel) {
     final List<MessageDetailModel>? messageList =
@@ -55,6 +58,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       ref
           .watch(chatDetailProviderStatement)
           .setWidgetForTextField(messageController: messageController);
+      setState(() {
+        isLoadStatus = true;
+      });
+      base64ProfileImage =
+          const Base64Decoder().convert(oppositeData!.profilePhotoBase64);
+    });
+    Future.delayed(const Duration(milliseconds: 100), () {
+      scrollController.animateTo(
+        scrollController.position.maxScrollExtent + 100,
+        duration: const Duration(milliseconds: 1),
+        curve: Curves.easeOut,
+      );
     });
     if (socket == null) {
       GeneralHelper.connectSocket();
@@ -72,19 +87,11 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
         curve: Curves.easeOut,
       );
     });
-    _timer = Timer(const Duration(milliseconds: 100), () async {
-      scrollController.animateTo(
-        scrollController.position.maxScrollExtent + 100,
-        duration: const Duration(milliseconds: 1),
-        curve: Curves.easeOut,
-      );
-    });
     super.initState();
   }
 
   @override
   void dispose() {
-    _timer.cancel();
     audioPlayer.dispose();
     audioRecord.dispose();
     super.dispose();
@@ -101,13 +108,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       //     permissions[Permission.microphone]!.isGranted;
 
       if (await audioRecord.hasPermission()) {
-        setState(() {
-          isAudioRecording = true;
-          textOrAudio = const Padding(
-            padding: EdgeInsets.all(8),
-            child: Text("Sesiniz kayıt ediliyor."),
-          );
-        });
+        ref.watch(chatDetailProviderStatement).isAudioRecording = true;
+        ref.watch(chatDetailProviderStatement).setWidgetForCustom(
+                widget: const Padding(
+              padding: EdgeInsets.only(top: 12,left: 10,),
+              child: Text("Sesiniz kayıt ediliyor."),
+            ));
 
         Directory appDocDirectory = await getApplicationDocumentsDirectory();
         Directory appFolder = Directory("${appDocDirectory.path}/recording");
@@ -135,24 +141,14 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     try {
       final String? recordPath = await audioRecord.stop();
       print(recordPath);
+      ref.watch(chatDetailProviderStatement).isAudioRecording = false;
+      ref.watch(chatDetailProviderStatement).setWidgetForAudioPlayer(
+            filePath: recordPath!,
+            audioPlayer: audioPlayer,
+            messageController: messageController,
+          );
       setState(() {
-        isAudioRecording = false;
-        textOrAudio = Row(
-          children: [
-            InkWell(
-              onTap: () {
-                playLastAudioRecord();
-              },
-              child: Icon(
-                isLastAudioPlaying == true
-                    ? Icons.stop_circle_outlined
-                    : Icons.play_arrow,
-                size: 30,
-              ),
-            )
-          ],
-        );
-        lastAudioRecordPAth = recordPath!;
+        lastAudioRecordPAth = recordPath;
       });
       // await audioPlayer.play(UrlSource(recordPath!));
     } catch (e) {
@@ -160,52 +156,18 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
     }
   }
 
-  Future<void> playLastAudioRecord() async {
-    if (lastAudioRecordPAth == null) return;
-    setState(() {
-      isLastAudioPlaying = true;
-    });
-    await audioPlayer.play(UrlSource(lastAudioRecordPAth!), volume: 100);
-    audioPlayer.onPlayerComplete.listen((event) {
-      setState(() {
-        isLastAudioPlaying = false;
-        textOrAudio = TextFormField(
-          controller: messageController,
-          onChanged: (value) {
-            if (value.isNotEmpty) {
-              setState(() {
-                isWriting = true;
-              });
-            } else {
-              setState(() {
-                isWriting = false;
-              });
-            }
-          },
-          decoration: const InputDecoration(
-            hintText: "Mesajınızı yazınız.",
-            contentPadding: EdgeInsets.all(5),
-            border: InputBorder.none,
-          ),
-        );
-      });
-    });
-  }
-
   @override
   Widget build(BuildContext context) {
-    final oppositeData = GeneralHelper.getOppositeUserData(
-      senderData: widget.messageModel.senderData,
-      receiverData: widget.messageModel.receiverData,
-      userId: widget.userID,
-    );
-
     final getChatDetailProvider = ref.watch(chatDetailProviderStatement);
-
-    Uint8List base64ProfileImage =
-        Base64Decoder().convert(oppositeData.profilePhotoBase64);
     final width = MediaQuery.of(context).size.width;
     final height = MediaQuery.of(context).size.height;
+    if(isLoadStatus == false) {
+      oppositeData = GeneralHelper.getOppositeUserData(
+        senderData: widget.messageModel.senderData,
+        receiverData: widget.messageModel.receiverData,
+        userId: widget.userID,
+      );
+    }
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
@@ -240,7 +202,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              oppositeData.name!,
+              oppositeData!.name!,
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             Text(
@@ -280,7 +242,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                   );
                 }
                 final singleMessageData =
-                    widget.messageModel.allMessage![index];
+                widget.messageModel.allMessage![index];
                 return ChatDetailMessageListCard(
                   userID: widget.userID,
                   messageDetailModel: singleMessageData,
@@ -303,11 +265,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                     width: getChatDetailProvider.isMessageWriting == false
                         ? width - 150
                         : width - 100,
+                    height: 55,
                     child: Card(
                       margin: const EdgeInsets.only(bottom: 10),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10)),
-                      child: getChatDetailProvider.textFieldOrAudioPlayer,
+                      child: Stack(
+                        children: [
+                          getChatDetailProvider.textFieldOrAudioPlayer,
+                          if (getChatDetailProvider.isLastAudioPlaying)
+                            Positioned(
+                              right: 10,
+                              top: 13,
+                              child: Text(
+                                getChatDetailProvider.lastAudioTiming,
+                              ),
+                            )
+                        ],
+                      ),
                     ),
                   ),
                   if (getChatDetailProvider.isMessageWriting == false)
@@ -348,12 +323,12 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
                               isWriting = false;
                             });
                             MessageDetailModel response =
-                                GeneralHelper.sendMessage(
-                                    userID: widget.userID,
-                                    targetID: oppositeData.id,
-                                    messageModel: widget.messageModel,
-                                    textEditingController: messageController,
-                                    message: messageController.text);
+                            GeneralHelper.sendMessage(
+                                userID: widget.userID,
+                                targetID: oppositeData!.id,
+                                messageModel: widget.messageModel,
+                                textEditingController: messageController,
+                                message: messageController.text);
                             setMessageList(response);
                             scrollController.animateTo(
                               scrollController.position.maxScrollExtent + 100,

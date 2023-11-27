@@ -111,7 +111,7 @@ class _ChatListScreenState extends State<ChatListScreen> {
                         alignment: FractionalOffset.bottomCenter,
                         child: Container(
                           width: width,
-                          height: height - 220,
+                          height: height - 225,
                           margin: const EdgeInsets.only(bottom: 155),
                           decoration: const BoxDecoration(
                               color: Colors.white,

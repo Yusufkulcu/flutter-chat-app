@@ -78,7 +78,7 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: activePage,
       bottomNavigationBar: SizedBox(
-        height: 80,
+        height: 82,
         child: BottomNavigationBar(
           backgroundColor: Colors.white70,
           type: BottomNavigationBarType.fixed,

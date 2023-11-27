@@ -11,6 +11,8 @@ const apiEndpoint = "https://chatappapi.yusufkulcu.com.tr/api";
 const socketUrl = "http://185.136.206.33:5000";
 
 IO.Socket? socket;
+String defaultProfilePhoto =
+    "iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAA2klEQVR4Ae3WsQmDUBSF4VTZIF3qQHCLFPZuZGtl4xaCGwjuoC5gL4KxFG7+wjYQ89RncX74+hyIei8bp5RSSgVI0eK9aJEiwGm7IsMM+2JGhusZf3wJ+1F5thEZbKUMpyjADFtpRgDvpbA/pfBe4zCggfdGhwGjBugv5PwQ6zWqD5nzKaFjTue0UuqGCAkK1Ohgiw41CiSIcIPXnojhegvFeOKwQlSwjVUIsVt3lLCdlbhj017oYQfp8cImPTDBDjbhAedymCc5nBtgngxwzjzTANuJBiillFIfPBEJG9OlHGwAAAAASUVORK5CYII=";
 
 class GeneralHelper {
   static void connectSocket() async {
@@ -21,7 +23,8 @@ class GeneralHelper {
       'autoConnect': true
     });
     socket!.connect();
-    socket!.onConnect((data) => socket!.emit("loginSocket", pref.getString("userID")));
+    socket!.onConnect(
+        (data) => socket!.emit("loginSocket", pref.getString("userID")));
   }
 
   static MessageDetailModel sendMessage({
@@ -55,8 +58,8 @@ class GeneralHelper {
 
     socket!.emit("sendMessage", {
       "targetId": targetID,
-      "messageDetailModel" : messageDetailModel.toJson(),
-      "messageModel" : messageModel.toJson()
+      "messageDetailModel": messageDetailModel.toJson(),
+      "messageModel": messageModel.toJson()
     });
 
     return messageDetailModel;
@@ -105,17 +108,18 @@ class GeneralHelper {
     }
   }
 
-  static String getMessageSpecificDate(MessageDetailModel messageDetailModel, String type) {
+  static String getMessageSpecificDate(
+      MessageDetailModel messageDetailModel, String type) {
     DateTime date = DateTime.fromMillisecondsSinceEpoch(
         int.parse(messageDetailModel.messageDetail_messageDate),
         isUtc: false);
-    if(type=="hour") {
+    if (type == "hour") {
       return DateFormat.Hm("tr").format(date);
-    }else if(type=="fulldate") {
+    } else if (type == "fulldate") {
       return DateFormat.yMMMd("tr").format(date);
-    }else if(type=="day") {
+    } else if (type == "day") {
       return DateFormat.EEEE("tr").format(date);
-    }else {
+    } else {
       return DateFormat.yMMMd("tr").format(date);
     }
   }
