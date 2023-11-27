@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 import 'package:chatappyenitasarim/Helpers/GeneralHelper.dart';
 import 'package:chatappyenitasarim/Models/MessageDetailModel.dart';
@@ -7,8 +8,11 @@ import 'package:chatappyenitasarim/Models/MessageModel.dart';
 import 'package:chatappyenitasarim/Widgets/ChatDetailMessageListCard.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:record/record.dart';
 import 'package:audioplayers/audioplayers.dart';
+import 'package:path/path.dart' as path;
 
 class ChatDetailScreen extends StatefulWidget {
   const ChatDetailScreen({
@@ -44,7 +48,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   @override
   void initState() {
     super.initState();
-
+    GeneralHelper.connectSocket(widget.userID);
     audioPlayer = AudioPlayer();
     audioRecord = AudioRecorder();
 
@@ -77,12 +81,36 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> startAudioRecord() async {
     try {
+
+      Map<Permission, PermissionStatus> permissions = await [
+        Permission.storage,
+        Permission.microphone,
+      ].request();
+
+      bool permissionsGranted = permissions[Permission.storage]!.isGranted &&
+          permissions[Permission.microphone]!.isGranted;
+
       if (await audioRecord.hasPermission()) {
         setState(() {
           isAudioRecording = true;
         });
+
+        Directory appDocDirectory = await getApplicationDocumentsDirectory();
+        Directory appFolder = Directory("${appDocDirectory.path}/recording");
+        bool appFolderExists = await appFolder.exists();
+        var createdPath = "";
+        if (!appFolderExists) {
+          final created = await appFolder.create(recursive: true);
+          createdPath = created.path;
+          print(created.path);
+        }else {
+          createdPath = appFolder.path;
+        }
+        final filepath = '$createdPath/${DateTime.now().millisecondsSinceEpoch}.rn';
+        print(filepath);
+
         await audioRecord.start(const RecordConfig(),
-            path: 'aFullPath/myFile.m4a');
+            path: filepath);
       }
     } catch (e) {
       print("Kayıt başlamadı $e");
@@ -96,6 +124,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       });
       final String? recordPath = await audioRecord.stop();
       print(recordPath);
+      await audioPlayer.play(UrlSource(recordPath!));
     } catch (e) {
       print("Kayıt durdurulamadı $e");
     }
