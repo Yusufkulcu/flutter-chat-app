@@ -138,7 +138,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                     color: Colors.white,
                                   ),
                                 ),
-                                backgroundColor: Color(0xff2a1540),
+                                backgroundColor: const Color(0xff2a1540),
                                 actions: [
                                   TextButton(
                                     onPressed: () {
