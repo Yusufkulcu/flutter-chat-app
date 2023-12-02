@@ -42,6 +42,7 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
   late String? lastAudioRecordPAth;
   late UserModel? oppositeData;
   bool isLoadStatus = false;
+  Timer? voiceRecordRemaingTime;
   late Uint8List base64ProfileImage = Base64Decoder().convert(defaultProfilePhoto);
 
   void setMessageList(MessageDetailModel messageDetailModel) {
@@ -108,11 +109,24 @@ class _ChatDetailScreenState extends ConsumerState<ChatDetailScreen> {
       //     permissions[Permission.microphone]!.isGranted;
 
       if (await audioRecord.hasPermission()) {
+        voiceRecordRemaingTime = Timer.periodic(const Duration(milliseconds: 1000), (timer) {
+          ref.watch(chatDetailProviderStatement).setVoiceRecordPassingTime();
+        });
         ref.watch(chatDetailProviderStatement).isAudioRecording = true;
         ref.watch(chatDetailProviderStatement).setWidgetForCustom(
-                widget: const Padding(
+                widget: Padding(
               padding: EdgeInsets.only(top: 12,left: 10,),
-              child: Text("Sesiniz kayıt ediliyor."),
+              child: Stack(
+                children: [
+                  Text("Sesiniz kayıt ediliyor."),
+                  Positioned(
+                    right: 0,
+                    child: Text(
+                        ref.watch(chatDetailProviderStatement).voiceRecordPassingTime.toString().split(".")[0]
+                    ),
+                  ),
+                ],
+              ),
             ));
 
         Directory appDocDirectory = await getApplicationDocumentsDirectory();

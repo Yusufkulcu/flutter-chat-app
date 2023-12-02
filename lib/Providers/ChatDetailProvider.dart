@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,7 +10,7 @@ class ChatDetailProvider extends ChangeNotifier {
   bool isAudioRecording = false;
   bool isLastAudioPlaying = false;
   String lastAudioTiming = "0:00:00";
-
+  Duration voiceRecordPassingTime = Duration.zero;
 
   setWidgetForTextField({
     required TextEditingController messageController,
@@ -31,6 +33,11 @@ class ChatDetailProvider extends ChangeNotifier {
     notifyListeners();
   }
 
+  setVoiceRecordPassingTime() {
+    voiceRecordPassingTime += const Duration(seconds: 1);
+    notifyListeners();
+  }
+
   setWidgetForCustom({required Widget widget}) {
     textFieldOrAudioPlayer = widget;
     notifyListeners();
@@ -48,6 +55,7 @@ class ChatDetailProvider extends ChangeNotifier {
           InkWell(
             onTap: () {
               audioPlayer.stop();
+              isLastAudioPlaying = false;
               setWidgetForTextField(messageController: messageController);
             },
             child: const Icon(
@@ -69,6 +77,7 @@ class ChatDetailProvider extends ChangeNotifier {
                     InkWell(
                       onTap: () {
                         audioPlayer.stop();
+                        isLastAudioPlaying = false;
                         setWidgetForTextField(messageController: messageController);
                       },
                       child: const Icon(
