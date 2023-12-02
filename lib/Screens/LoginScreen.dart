@@ -253,7 +253,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             });
                       },
                       child: const Text(
-                        "Giriş Yap",
+                        "Giriş Yap cdcds",
                         style: TextStyle(
                           color: Colors.black,
                           fontSize: 19,
