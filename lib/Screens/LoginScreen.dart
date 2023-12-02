@@ -77,12 +77,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     width: width * 0.25,
                     child: CountryDropdown(
                       printCountryName: true,
-                      dropdownColor: Color(0xff2a1540),
+                      dropdownColor: const Color(0xff2a1540),
                       decoration: const InputDecoration(
                         hintText: "Alan Kodu",
                         hintStyle: TextStyle(color: Colors.white),
                       ),
-                      style: TextStyle(color: Colors.white),
+                      style: const TextStyle(color: Colors.white),
                       onCountrySelected: (PhoneCountryData countryData) {
                         print(countryData);
                         setState(() {
