@@ -51,6 +51,7 @@ dependencies:
   path_provider: ^2.1.1
   flutter_riverpod: ^2.4.9
   riverpod: ^2.4.9
+  shorebird_code_push: ^1.1.3
 
 dev_dependencies:
   flutter_test:

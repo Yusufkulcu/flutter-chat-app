@@ -34,7 +34,7 @@ class SplashScreen extends StatelessWidget {
                   onPressed: () {
                     Get.to(const LoginScreen(), transition: Transition.fade);
                   },
-                  child: Text("Giriş Yap",style: TextStyle(color: Colors.black,fontSize: 25,fontWeight: FontWeight.bold),),
+                  child: Text("Giriş Yap aa",style: TextStyle(color: Colors.black,fontSize: 25,fontWeight: FontWeight.bold),),
                 ),
               )
             ],
